@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Atlan Data Upload</title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+
+<body>
+  <div id="frame">
+
+    <img src="./atlan.png" width="20%" height="5%">
+    <p>
+      You can upload your data here.
+    </p>
+    <p>
+      During data transfer, you'll pause, resume, and terminate transfer at any point in time.
+    </p>
+    <p>
+      This could help when erroneous data is transmitted so that we do not need to await the entire transfer to finish.
+      Also, in-network problems and, therefore, the whole file wouldn't be needed to be uploaded again.
+    </p>
+    <p>
+      (This might be simulated by stopping the server and restarting within the middle of an upload)
+    </p>
+    <p>
+      In summary, resumable.js breaks data into multiple chunks separately uploaded to the server. Each chunk is
+      assigned a singular id for identification purposes; then, when the complete file is transferred, and therefore the
+      chunks are reassembled within the correct order to regenerate the right file.<br>
+      In pause/resume, the chunks are held back from transmitting until the resume button is pressed.
+      <br>
+      If the user decides to permanently stop the transmission, the transmission is terminated, and every one of the
+      chunks already transferred is deleted from the server.
+    </p>
+    <hr />
+
+    <h3>Challenge</h3>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="resumable.js"></script>
+
+    <div class="resumable-error">
+      Your browser, unfortunately, is not supported by Resumable.js. The library requires support for <a
+        href="http://www.w3.org/TR/FileAPI/">the HTML5 File API</a> along with <a
+        href="http://www.w3.org/TR/FileAPI/#normalization-of-params">file slicing</a>.
+    </div>
+
+    <div class="resumable-drop" id="uploader">
+      Drop Your files here to upload or <a class="resumable-browse"><u>select from your computer</u></a>
+    </div>
+
+    <div class="resumable-progress">
+      <table>
+        <tr>
+          <td width="100%">
+            <div class="progress-container">
+              <div class="progress-bar"></div>
+            </div>
+          </td>
+          <td class="progress-text" nowrap="nowrap"></td>
+          <td class="progress-pause" nowrap="nowrap">
+            <a href="#" onclick="r.upload(); return(false);" class="progress-resume-link"><button id="button1"><img
+                  src="resume.png" title="Resume upload" /></button></a>
+            <a href="#" onclick="r.pause(); return(false);" class="progress-pause-link"><button id="button1"><img
+                  src="pause.png" title="Pause upload" /></button></a></button>
+            <a href="#" onclick="r.cancel(); return(false);" class="progress-cancel-link"><button id="button1"><img
+                  src="cancel.png" title="Cancel upload" /></button></a>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <ul class="resumable-list"></ul>
+
+    <script>
+      var r = new Resumable({
+        target: 'http://localhost:3000/upload',
+        chunkSize: 1 * 1024 * 1024,
+        simultaneousUploads: 4,
+        testChunks: false,
+        throttleProgressCallbacks: 1
+      });
+      // Resumable.js isn't supported, fall back on a different method
+      if (!r.support) {
+        $('.resumable-error').show();
+      } else {
+        // Show a place for dropping/selecting files
+        $('.resumable-drop').show();
+        r.assignDrop($('.resumable-drop')[0]);
+        r.assignBrowse($('.resumable-browse')[0]);
+
+        // Handle file add event
+        r.on('fileAdded', function (file) {
+          // Show progress bar
+          $('.resumable-progress, .resumable-list').show();
+          // Show pause, hide resume
+          $('.resumable-progress .progress-resume-link').hide();
+          $('.resumable-progress .progress-pause-link').show();
+          // Add the file to the list
+          $('.resumable-list').append('<li class="resumable-file-' + file.uniqueIdentifier + '">Your file <span class="resumable-file-name"></span> <span class="resumable-file-progress"></span>');
+          $('.resumable-file-' + file.uniqueIdentifier + ' .resumable-file-name').html(file.fileName);
+          // Actually start the upload
+          r.upload();
+        });
+        r.on('pause', function () {
+          // Show resume, hide pause
+          $('.resumable-progress .progress-resume-link').show();
+          $('.resumable-progress .progress-pause-link').hide();
+        });
+        r.on('complete', function () {
+          // Hide pause/resume when the upload has completed
+          $('.resumable-progress .progress-resume-link, .resumable-progress .progress-pause-link').hide();
+        });
+        r.on('fileSuccess', function (file, message) {
+          // Reflect that the file upload has completed
+          $('.resumable-file-' + file.uniqueIdentifier + ' .resumable-file-progress').html('is uploaded Successfully.');
+        });
+        r.on('fileError', function (file, message) {
+          // Reflect that the file upload has resulted in error
+          $('.resumable-file-' + file.uniqueIdentifier + ' .resumable-file-progress').html('could not be Uploaded: ' + message);
+        });
+        r.on('fileProgress', function (file) {
+          // Handle progress for both the file and the overall upload
+          $('.resumable-file-' + file.uniqueIdentifier + ' .resumable-file-progress').html(Math.floor(file.progress() * 100) + '%');
+          $('.progress-bar').css({ width: Math.floor(r.progress() * 100) + '%' });
+        });
+        r.on('cancel', function () {
+          $('.resumable-file-progress').html('upload Cancelled');
+        });
+        r.on('uploadStart', function () {
+          // Show pause, hide resume
+          $('.resumable-progress .progress-resume-link').hide();
+          $('.resumable-progress .progress-pause-link').show();
+        });
+      }
+    </script>
+
+  </div>
+  <br><br><br><br><br><br><br>
+</body>
+
+</html>

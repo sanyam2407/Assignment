@@ -1,0 +1,22 @@
+{
+  "name": "resumble-example",
+  "version": "1.0.0",
+  "description": "Sample Express App to demonstrate Resumable.js",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Resumable.js",
+    "upload",
+    "express",
+    "nodejs"
+  ],
+  "author": "Raf",
+  "dependencies": {
+    "connect-multiparty": "^2.0.0",
+    "express": "^4.13.4",
+    "fs": "0.0.2",
+    "path": "^0.12.7"
+  }
+}
